@@ -237,3 +237,12 @@ async def spending_ranking(limit: int = Query(default=20, ge=1, le=50)):
     )
     ranked = [{"rank": i + 1, **entry} for i, entry in enumerate(sorted_data[:limit])]
     return {"indicator": "Health Expenditure", "unit": "% of GDP", "source": "World Bank", "updated_at": datetime.utcnow().isoformat() + "Z", "spending_ranking": ranked}
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    if request.url.path == "/":
+        return await call_next(request)
+    key = request.headers.get("X-RapidAPI-Key", "")
+    if not key:
+        return JSONResponse(status_code=401, content={"detail": "Missing X-RapidAPI-Key header"})
+    return await call_next(request)
